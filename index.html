@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Allahardan Telecom - Dashboard</title>
+    <title>Allahardan Telecom</title>
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#1B365D">
+    <link rel="apple-touch-icon" href="https://i.imgur.com/2Z09pLQ.png">
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome for Icons -->
@@ -27,7 +30,7 @@
         body { font-family: 'Hind Siliguri', sans-serif; }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 pb-20 md:pb-0">
+<body class="bg-gray-50 text-gray-800 pb-24 md:pb-0">
 
     <!-- Top Navigation Bar -->
     <header class="bg-brandBlue text-white shadow-md sticky top-0 z-50">
@@ -42,7 +45,10 @@
                 </div>
             </div>
             <div class="flex items-center space-x-2">
-                <span id="live-status" class="text-xs bg-yellow-500 text-white px-2.5 py-1 rounded-full animate-pulse">সংযুক্ত হচ্ছে...</span>
+                <button id="install-btn" class="hidden bg-brandOrange text-white text-xs px-3 py-1.5 rounded-lg shadow animate-bounce">
+                    <i class="fa-solid fa-download mr-1"></i> অ্যাপ ইনস্টল করুন
+                </button>
+                <span id="live-status" class="text-xs bg-yellow-500 text-white px-2.5 py-1 rounded-full">সংযুক্ত হচ্ছে...</span>
             </div>
         </div>
     </header>
@@ -81,7 +87,7 @@
             </div>
         </div>
 
-        <!-- Quick Action Forms / Inventory Section -->
+        <!-- Inventory Section -->
         <section class="md:col-span-2 bg-white rounded-2xl shadow-sm p-5">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-lg font-bold text-brandBlue"><i class="fa-solid fa-list-check mr-2"></i>প্রোডাক্ট ও স্টক তালিকা</h2>
@@ -102,7 +108,7 @@
                     </thead>
                     <tbody id="product-table-body" class="text-sm divide-y divide-gray-100">
                         <tr>
-                            <td colspan="5" class="p-4 text-center text-gray-400">গুগল শিট থেকে ডাটা লোড হচ্ছে...</td>
+                            <td colspan="5" class="p-4 text-center text-gray-400">ডাটা লোড হচ্ছে...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -137,29 +143,10 @@
 
     </main>
 
-    <!-- Mobile Bottom Navigation Bar (App Feel) -->
-    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around py-3 z-50 shadow-lg">
-        <a href="#" class="flex flex-col items-center text-brandBlue">
-            <i class="fa-solid fa-house text-lg"></i>
-            <span class="text-[10px] mt-1">হোম</span>
-        </a>
-        <a href="#" class="flex flex-col items-center text-gray-400 hover:text-brandBlue">
-            <i class="fa-solid fa-boxes-stacked text-lg"></i>
-            <span class="text-[10px] mt-1">স্টক</span>
-        </a>
-        <a href="#" class="flex flex-col items-center text-gray-400 hover:text-brandBlue">
-            <i class="fa-solid fa-chart-pie text-lg"></i>
-            <span class="text-[10px] mt-1">হিসাব</span>
-        </a>
-        <a href="#" class="flex flex-col items-center text-gray-400 hover:text-brandBlue">
-            <i class="fa-solid fa-user text-lg"></i>
-            <span class="text-[10px] mt-1">প্রোফাইল</span>
-        </a>
-    </nav>
-
-    <!-- JavaScript for Live Google Sheet Integration -->
+    <!-- JavaScript -->
     <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzfMI_NlUh0clN_pcJm5epPUAVn6njZCKEYUT3hS9ETITKCrCGQWzlpQCcuB09HUnk/exec";
+        // আপনার নতুন ডিপ্লয় করা Apps Script URL এখানে বসাবেন
+        const https://script.google.com/macros/s/AKfycbzfMI_NlUh0clN_pcJm5epPUAVn6njZCKEYUT3hS9ETITKCrCGQWzlpQCcuB09HUnk/exec = "NEW_GOOGLE_APPS_SCRIPT_WEB_URL_HERE";
 
         async function fetchData() {
             const statusEl = document.getElementById('live-status');
@@ -167,16 +154,19 @@
             statusEl.className = "text-xs bg-yellow-500 text-white px-2.5 py-1 rounded-full";
 
             try {
-                let response = await fetch(WEB_APP_URL + "?action=getData");
-                let data = await response.json();
+                let response = await fetch(https://script.google.com/macros/s/AKfycbzfMI_NlUh0clN_pcJm5epPUAVn6njZCKEYUT3hS9ETITKCrCGQWzlpQCcuB09HUnk/exec + "?action=getData");
+                let result = await response.json();
                 
-                renderTable(data.products);
-                calculateSummary(data);
-
-                statusEl.innerText = "Live Connected";
-                statusEl.className = "text-xs bg-green-500 text-white px-2.5 py-1 rounded-full animate-pulse";
+                if(result.status === "success") {
+                    renderTable(result.products);
+                    calculateSummary(result);
+                    statusEl.innerText = "Live Connected";
+                    statusEl.className = "text-xs bg-green-500 text-white px-2.5 py-1 rounded-full animate-pulse";
+                } else {
+                    throw new Error(result.message);
+                }
             } catch (error) {
-                console.error("Error fetching data:", error);
+                console.error("Error:", error);
                 statusEl.innerText = "Connection Failed";
                 statusEl.className = "text-xs bg-red-500 text-white px-2.5 py-1 rounded-full";
             }
@@ -185,7 +175,7 @@
         function renderTable(products) {
             const tbody = document.getElementById('product-table-body');
             if (!products || products.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-400">কোনো প্রোডাক্ট পাওয়া যায়নি। গুগল শিটে প্রোডাক্ট যুক্ত করুন।</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-400">কোনো প্রোডাক্ট পাওয়া যায়নি।</td></tr>`;
                 return;
             }
             tbody.innerHTML = "";
@@ -207,26 +197,19 @@
         }
 
         function calculateSummary(data) {
-            // হিসাব কিতাব ও ট্রানজাকশন সামারি হ্যান্ডলিং
-            let todayStr = new Date().toISOString().split('T')[0];
             let totalSalesAmount = 0;
             let netIncomeExpense = 0;
 
             if (data.transactions) {
                 data.transactions.forEach(tx => {
-                    if (tx.Type === 'Sale') {
-                        totalSalesAmount += Number(tx.TotalAmount || 0);
-                    }
+                    if (tx.Type === 'Sale') totalSalesAmount += Number(tx.TotalAmount || 0);
                 });
             }
 
             if (data.incomeExpense) {
                 data.incomeExpense.forEach(ie => {
-                    if (ie.Category === 'Income') {
-                        netIncomeExpense += Number(ie.Amount || 0);
-                    } else if (ie.Category === 'Expense') {
-                        netIncomeExpense -= Number(ie.Amount || 0);
-                    }
+                    if (ie.Category === 'Income') netIncomeExpense += Number(ie.Amount || 0);
+                    else if (ie.Category === 'Expense') netIncomeExpense -= Number(ie.Amount || 0);
                 });
             }
 
@@ -248,15 +231,14 @@
             let payload = {
                 ID: "TX-" + Date.now(),
                 Date: currentDate,
-                Category: type === 'Sale' ? 'Sale' : type,
+                Category: type,
                 Source: reason,
                 Amount: amount,
-                Note: "Web App Entry"
+                Note: "Web App"
             };
 
             try {
-                // Google Apps Script এ ডাটা পাঠানো (POST Request)
-                await fetch(WEB_APP_URL, {
+                await fetch(https://script.google.com/macros/s/AKfycbzfMI_NlUh0clN_pcJm5epPUAVn6njZCKEYUT3hS9ETITKCrCGQWzlpQCcuB09HUnk/exec, {
                     method: 'POST',
                     mode: 'no-cors',
                     headers: { 'Content-Type': 'application/json' },
@@ -265,17 +247,35 @@
 
                 alert("সফলভাবে Google Sheet-এ সেভ হয়েছে!");
                 document.getElementById('entry-form').reset();
-                fetchData(); // ডাটা রিফ্রেশ করা
+                setTimeout(fetchData, 1500);
             } catch (error) {
-                console.error("Error saving data:", error.message);
-                alert("ডাটা সেভ করার সময় সমস্যা হয়েছে।");
+                alert("সেভ করতে সমস্যা হয়েছে।");
             } finally {
                 submitBtn.innerText = "সেভ করুন";
                 submitBtn.disabled = false;
             }
         }
 
-        // পেজ লোড হওয়ার সাথে সাথে ডাটা ফেচ হবে
+        // PWA Install Prompt Script
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            const installBtn = document.getElementById('install-btn');
+            installBtn.classList.remove('hidden');
+
+            installBtn.addEventListener('click', () => {
+                installBtn.classList.add('hidden');
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('User accepted the install prompt');
+                    }
+                    deferredPrompt = null;
+                });
+            });
+        });
+
         fetchData();
     </script>
 </body>
