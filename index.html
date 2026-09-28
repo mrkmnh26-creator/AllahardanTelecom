@@ -6,13 +6,11 @@
     <title>Allahardan Telecom</title>
     <meta name="theme-color" content="#1B365D">
     
-    <!-- Favicon using your Logo -->
+    <!-- Favicon -->
     <link rel="icon" type="image/png" href="https://i.ibb.co.com/841wVn5/image-ad44ea.png">
     <link rel="apple-touch-icon" href="https://i.ibb.co.com/841wVn5/image-ad44ea.png">
 
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
         tailwind.config = {
@@ -35,7 +33,6 @@
 </head>
 <body class="bg-gray-50 text-gray-800 pb-24 md:pb-0">
 
-    <!-- Top Navigation Bar -->
     <header class="bg-brandBlue text-white shadow-md sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
             <div class="flex items-center space-x-3">
@@ -56,10 +53,8 @@
         </div>
     </header>
 
-    <!-- Main Container -->
     <main class="max-w-7xl mx-auto p-4 md:p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
 
-        <!-- Summary Cards -->
         <div class="bg-white p-5 rounded-2xl shadow-sm border-l-4 border-brandBlue flex items-center justify-between">
             <div>
                 <p class="text-sm text-gray-500">মোট প্রোডাক্ট স্টক</p>
@@ -90,7 +85,6 @@
             </div>
         </div>
 
-        <!-- Inventory Section -->
         <section class="md:col-span-2 bg-white rounded-2xl shadow-sm p-5">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-lg font-bold text-brandBlue"><i class="fa-solid fa-list-check mr-2"></i>প্রোডাক্ট ও স্টক তালিকা</h2>
@@ -118,7 +112,6 @@
             </div>
         </section>
 
-        <!-- Quick Entry Section -->
         <section class="bg-white rounded-2xl shadow-sm p-5">
             <h2 class="text-lg font-bold text-brandOrange mb-4"><i class="fa-solid fa-plus-circle mr-2"></i>দ্রুত এন্ট্রি করুন</h2>
             <form id="entry-form" onsubmit="handleFormSubmit(event)" class="space-y-4">
@@ -146,19 +139,21 @@
 
     </main>
 
-    <!-- JavaScript -->
     <script>
-        // আপনার নতুন ডিপ্লয় করা Google Apps Script Web App URL এখানে বসাবেন
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzfMI_NlUh0clN_pcJm5epPUAVn6njZCKEYUT3hS9ETITKCrCGQWzlpQCcuB09HUnk/exec";
+        const https://script.google.com/macros/s/AKfycbzfMI_NlUh0clN_pcJm5epPUAVn6njZCKEYUT3hS9ETITKCrCGQWzlpQCcuB09HUnk/exec = "YOUR_NEW_APPS_SCRIPT_DEPLOY_URL";
 
-        async function fetchData() {
+        function fetchData() {
             const statusEl = document.getElementById('live-status');
             statusEl.innerText = "লোড হচ্ছে...";
             statusEl.className = "text-xs bg-yellow-500 text-white px-2.5 py-1 rounded-full";
 
-            try {
-                let response = await fetch(WEB_APP_URL + "?action=getData");
-                let result = await response.json();
+            // JSONP implementation to bypass CORS completely
+            const scriptName = 'jsonp_cb_' + Math.round(100000 * Math.random());
+            const url = WEB_APP_URL + "?action=getData&callback=" + scriptName;
+            
+            window[scriptName] = function(result) {
+                document.body.removeChild(scriptTag);
+                delete window[scriptName];
                 
                 if(result.status === "success") {
                     renderTable(result.products);
@@ -166,25 +161,30 @@
                     statusEl.innerText = "Live Connected";
                     statusEl.className = "text-xs bg-green-500 text-white px-2.5 py-1 rounded-full animate-pulse";
                 } else {
-                    throw new Error(result.message);
+                    statusEl.innerText = "Connection Failed";
+                    statusEl.className = "text-xs bg-red-500 text-white px-2.5 py-1 rounded-full";
                 }
-            } catch (error) {
-                console.error("Error:", error);
+            };
+
+            const scriptTag = document.createElement('script');
+            scriptTag.src = url;
+            scriptTag.onerror = function() {
                 statusEl.innerText = "Connection Failed";
                 statusEl.className = "text-xs bg-red-500 text-white px-2.5 py-1 rounded-full";
-            }
+            };
+            document.body.appendChild(scriptTag);
         }
 
         function renderTable(products) {
             const tbody = document.getElementById('product-table-body');
             if (!products || products.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-400">কোনো প্রোডাক্ট পাওয়া যায়নি। গুগল শিটের Products ট্যাবে ডাটা যুক্ত করুন।</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-400">কোনো প্রোডাক্ট পাওয়া যায়নি।</td></tr>`;
                 return;
             }
             tbody.innerHTML = "";
             let totalStockCount = 0;
 
-            products.forEach(p => {
+            products.length > 0 && products.forEach(p => {
                 totalStockCount += Number(p.Stock || 0);
                 tbody.innerHTML += `
                     <tr class="hover:bg-gray-50">
@@ -274,23 +274,6 @@
                 submitBtn.disabled = false;
             }
         }
-
-        // PWA Install Prompt
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            const installBtn = document.getElementById('install-btn');
-            installBtn.classList.remove('hidden');
-
-            installBtn.addEventListener('click', () => {
-                installBtn.classList.add('hidden');
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then((choiceResult) => {
-                    deferredPrompt = null;
-                });
-            });
-        });
 
         fetchData();
     </script>
