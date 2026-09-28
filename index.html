@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Allahardan Telecom - Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brandBlue: '#1B365D',
+                        brandOrange: '#F26522',
+                        brandYellow: '#FFDE17',
+                        brandSky: '#00A8E8',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap');
+        body { font-family: 'Hind Siliguri', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 pb-20 md:pb-0">
+
+    <!-- Top Navigation Bar -->
+    <header class="bg-brandBlue text-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="bg-brandYellow text-brandBlue font-bold p-2 rounded-lg shadow">
+                    <i class="fa-solid fa-mobile-screen-button text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold tracking-wide">Allahardan Telecom</h1>
+                    <p class="text-xs text-brandSky">Mobile Phone Sell and Service</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <span id="live-status" class="text-xs bg-yellow-500 text-white px-2.5 py-1 rounded-full animate-pulse">সংযুক্ত হচ্ছে...</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto p-4 md:p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+
+        <!-- Summary Cards -->
+        <div class="bg-white p-5 rounded-2xl shadow-sm border-l-4 border-brandBlue flex items-center justify-between">
+            <div>
+                <p class="text-sm text-gray-500">মোট প্রোডাক্ট স্টক</p>
+                <h3 id="total-stock" class="text-2xl font-bold text-brandBlue">০ পিস</h3>
+            </div>
+            <div class="bg-blue-50 p-3 rounded-full text-brandBlue">
+                <i class="fa-solid fa-boxes-stacked text-xl"></i>
+            </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl shadow-sm border-l-4 border-brandOrange flex items-center justify-between">
+            <div>
+                <p class="text-sm text-gray-500">আজকের মোট বিক্রি</p>
+                <h3 id="total-sales" class="text-2xl font-bold text-brandOrange">৳ ০.০০</h3>
+            </div>
+            <div class="bg-orange-50 p-3 rounded-full text-brandOrange">
+                <i class="fa-solid fa-cart-shopping text-xl"></i>
+            </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl shadow-sm border-l-4 border-brandSky flex items-center justify-between">
+            <div>
+                <p class="text-sm text-gray-500">আজকের আয়-ব্যয় ব্যালেন্স</p>
+                <h3 id="net-balance" class="text-2xl font-bold text-brandSky">৳ ০.০০</h3>
+            </div>
+            <div class="bg-cyan-50 p-3 rounded-full text-brandSky">
+                <i class="fa-solid fa-wallet text-xl"></i>
+            </div>
+        </div>
+
+        <!-- Quick Action Forms / Inventory Section -->
+        <section class="md:col-span-2 bg-white rounded-2xl shadow-sm p-5">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-bold text-brandBlue"><i class="fa-solid fa-list-check mr-2"></i>প্রোডাক্ট ও স্টক তালিকা</h2>
+                <button onclick="fetchData()" class="text-sm bg-brandBlue text-white px-3 py-1.5 rounded-lg hover:bg-opacity-90 transition">
+                    <i class="fa-solid fa-rotate mr-1"></i> রিফ্রেশ
+                </button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-100 text-xs text-gray-600 uppercase">
+                            <th class="p-3 rounded-l-lg">প্রোডাক্ট নাম</th>
+                            <th class="p-3">ক্যাটাগরি</th>
+                            <th class="p-3">ক্রয় মূল্য</th>
+                            <th class="p-3">বিক্রয় মূল্য</th>
+                            <th class="p-3 rounded-r-lg">স্টক</th>
+                        </tr>
+                    </thead>
+                    <tbody id="product-table-body" class="text-sm divide-y divide-gray-100">
+                        <tr>
+                            <td colspan="5" class="p-4 text-center text-gray-400">গুগল শিট থেকে ডাটা লোড হচ্ছে...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Quick Entry Section -->
+        <section class="bg-white rounded-2xl shadow-sm p-5">
+            <h2 class="text-lg font-bold text-brandOrange mb-4"><i class="fa-solid fa-plus-circle mr-2"></i>দ্রুত এন্ট্রি করুন</h2>
+            <form id="entry-form" onsubmit="handleFormSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">এন্ট্রির ধরন</label>
+                    <select id="entry-type" class="w-full p-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-brandOrange outline-none">
+                        <option value="Sale">বিক্রি (Sale)</option>
+                        <option value="Income">আয় (Income)</option>
+                        <option value="Expense">ব্যয় (Expense)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">বিবরণ / কারণ</label>
+                    <input type="text" id="entry-reason" required placeholder="যেমন: নতুন ক্যাবল বিক্রি / দোকান ভাড়া" class="w-full p-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-brandOrange outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">টাকার পরিমাণ (৳)</label>
+                    <input type="number" id="entry-amount" required placeholder="০.০০" class="w-full p-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-brandOrange outline-none">
+                </div>
+                <button type="submit" id="submit-btn" class="w-full bg-brandOrange text-white font-semibold py-3 rounded-xl shadow hover:bg-opacity-90 transition">
+                    সেভ করুন
+                </button>
+            </form>
+        </section>
+
+    </main>
+
+    <!-- Mobile Bottom Navigation Bar (App Feel) -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around py-3 z-50 shadow-lg">
+        <a href="#" class="flex flex-col items-center text-brandBlue">
+            <i class="fa-solid fa-house text-lg"></i>
+            <span class="text-[10px] mt-1">হোম</span>
+        </a>
+        <a href="#" class="flex flex-col items-center text-gray-400 hover:text-brandBlue">
+            <i class="fa-solid fa-boxes-stacked text-lg"></i>
+            <span class="text-[10px] mt-1">স্টক</span>
+        </a>
+        <a href="#" class="flex flex-col items-center text-gray-400 hover:text-brandBlue">
+            <i class="fa-solid fa-chart-pie text-lg"></i>
+            <span class="text-[10px] mt-1">হিসাব</span>
+        </a>
+        <a href="#" class="flex flex-col items-center text-gray-400 hover:text-brandBlue">
+            <i class="fa-solid fa-user text-lg"></i>
+            <span class="text-[10px] mt-1">প্রোফাইল</span>
+        </a>
+    </nav>
+
+    <!-- JavaScript for Live Google Sheet Integration -->
+    <script>
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzfMI_NlUh0clN_pcJm5epPUAVn6njZCKEYUT3hS9ETITKCrCGQWzlpQCcuB09HUnk/exec";
+
+        async function fetchData() {
+            const statusEl = document.getElementById('live-status');
+            statusEl.innerText = "লোড হচ্ছে...";
+            statusEl.className = "text-xs bg-yellow-500 text-white px-2.5 py-1 rounded-full";
+
+            try {
+                let response = await fetch(WEB_APP_URL + "?action=getData");
+                let data = await response.json();
+                
+                renderTable(data.products);
+                calculateSummary(data);
+
+                statusEl.innerText = "Live Connected";
+                statusEl.className = "text-xs bg-green-500 text-white px-2.5 py-1 rounded-full animate-pulse";
+            } catch (error) {
+                console.error("Error fetching data:", error);
+                statusEl.innerText = "Connection Failed";
+                statusEl.className = "text-xs bg-red-500 text-white px-2.5 py-1 rounded-full";
+            }
+        }
+
+        function renderTable(products) {
+            const tbody = document.getElementById('product-table-body');
+            if (!products || products.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-400">কোনো প্রোডাক্ট পাওয়া যায়নি। গুগল শিটে প্রোডাক্ট যুক্ত করুন।</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = "";
+            let totalStockCount = 0;
+
+            products.forEach(p => {
+                totalStockCount += Number(p.Stock || 0);
+                tbody.innerHTML += `
+                    <tr class="hover:bg-gray-50">
+                        <td class="p-3 font-medium text-brandBlue">${p.ProductName || ''}</td>
+                        <td class="p-3 text-gray-500">${p.Category || ''}</td>
+                        <td class="p-3">৳ ${p.BuyPrice || 0}</td>
+                        <td class="p-3 font-semibold text-green-600">৳ ${p.SellPrice || 0}</td>
+                        <td class="p-3"><span class="bg-blue-50 text-brandBlue px-2 py-1 rounded-md text-xs font-bold">${p.Stock || 0} পিস</span></td>
+                    </tr>
+                `;
+            });
+            document.getElementById('total-stock').innerText = totalStockCount + " পিস";
+        }
+
+        function calculateSummary(data) {
+            // হিসাব কিতাব ও ট্রানজাকশন সামারি হ্যান্ডলিং
+            let todayStr = new Date().toISOString().split('T')[0];
+            let totalSalesAmount = 0;
+            let netIncomeExpense = 0;
+
+            if (data.transactions) {
+                data.transactions.forEach(tx => {
+                    if (tx.Type === 'Sale') {
+                        totalSalesAmount += Number(tx.TotalAmount || 0);
+                    }
+                });
+            }
+
+            if (data.incomeExpense) {
+                data.incomeExpense.forEach(ie => {
+                    if (ie.Category === 'Income') {
+                        netIncomeExpense += Number(ie.Amount || 0);
+                    } else if (ie.Category === 'Expense') {
+                        netIncomeExpense -= Number(ie.Amount || 0);
+                    }
+                });
+            }
+
+            document.getElementById('total-sales').innerText = "৳ " + totalSalesAmount.toLocaleString('en-IN');
+            document.getElementById('net-balance').innerText = "৳ " + netIncomeExpense.toLocaleString('en-IN');
+        }
+
+        async function handleFormSubmit(event) {
+            event.preventDefault();
+            const submitBtn = document.getElementById('submit-btn');
+            submitBtn.innerText = "সেভ হচ্ছে...";
+            submitBtn.disabled = true;
+
+            const type = document.getElementById('entry-type').value;
+            const reason = document.getElementById('entry-reason').value;
+            const amount = document.getElementById('entry-amount').value;
+            const currentDate = new Date().toISOString().split('T')[0];
+
+            let payload = {
+                ID: "TX-" + Date.now(),
+                Date: currentDate,
+                Category: type === 'Sale' ? 'Sale' : type,
+                Source: reason,
+                Amount: amount,
+                Note: "Web App Entry"
+            };
+
+            try {
+                // Google Apps Script এ ডাটা পাঠানো (POST Request)
+                await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                alert("সফলভাবে Google Sheet-এ সেভ হয়েছে!");
+                document.getElementById('entry-form').reset();
+                fetchData(); // ডাটা রিফ্রেশ করা
+            } catch (error) {
+                console.error("Error saving data:", error.message);
+                alert("ডাটা সেভ করার সময় সমস্যা হয়েছে।");
+            } finally {
+                submitBtn.innerText = "সেভ করুন";
+                submitBtn.disabled = false;
+            }
+        }
+
+        // পেজ লোড হওয়ার সাথে সাথে ডাটা ফেচ হবে
+        fetchData();
+    </script>
+</body>
+</html>
