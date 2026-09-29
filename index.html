@@ -6,6 +6,9 @@
     <title>Allahardan Telecom</title>
     <meta name="theme-color" content="#1B365D">
     
+    <!-- PWA Manifest Link -->
+    <link rel="manifest" href="manifest.json">
+    
     <!-- Favicon -->
     <link rel="icon" type="image/png" sizes="192x192" href="Allahardan Telecom 192.png">
     <link rel="apple-touch-icon" sizes="192x192" href="Allahardan Telecom 192.png">
@@ -54,7 +57,7 @@
     </header>
 
     <main class="max-w-7xl mx-auto p-4 md:p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-
+        <!-- Dashboard Cards -->
         <div class="bg-white p-5 rounded-2xl shadow-sm border-l-4 border-brandBlue flex items-center justify-between">
             <div>
                 <p class="text-sm text-gray-500">মোট প্রোডাক্ট স্টক</p>
@@ -136,11 +139,50 @@
                 </button>
             </form>
         </section>
-
     </main>
 
     <script>
+        // এখানে আপনার Apps Script এর ডিপ্লয় লিংকটি ঠিক আছে কিনা দেখে নিন
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzfMI_NlUh0clN_pcJm5epPUAVn6njZCKEYUT3hS9ETITKCrCGQWzlpQCcuB09HUnk/exec";
+
+        // === PWA & Install Button Logic ===
+        let deferredPrompt;
+        const installBtn = document.getElementById('install-btn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Prevent the mini-infobar from appearing on mobile
+            e.preventDefault();
+            // Stash the event so it can be triggered later.
+            deferredPrompt = e;
+            // Update UI notify the user they can install the PWA
+            installBtn.classList.remove('hidden');
+        });
+
+        installBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                // Show the install prompt
+                deferredPrompt.prompt();
+                // Wait for the user to respond to the prompt
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    console.log('User accepted the install prompt');
+                }
+                // We've used the prompt, and can't use it again, throw it away
+                deferredPrompt = null;
+                installBtn.classList.add('hidden');
+            }
+        });
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').then(reg => {
+                    console.log('Service Worker Registered');
+                }).catch(err => {
+                    console.log('Service Worker Failed to Register', err);
+                });
+            });
+        }
+        // === End PWA Logic ===
 
         function fetchData() {
             const statusEl = document.getElementById('live-status');
