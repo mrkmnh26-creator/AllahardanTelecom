@@ -33,6 +33,7 @@
         @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap');
         body { font-family: 'Hind Siliguri', sans-serif; }
         
+        /* Loader Animation */
         .loader {
             border: 3px solid #f3f3f3;
             border-top: 3px solid #F26522;
@@ -69,6 +70,7 @@
     </header>
 
     <main class="max-w-7xl mx-auto p-4 md:p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Dashboard Cards -->
         <div class="bg-white p-5 rounded-2xl shadow-sm border-l-4 border-brandBlue flex items-center justify-between">
             <div>
                 <p class="text-sm text-gray-500">মোট প্রোডাক্ট স্টক</p>
@@ -182,7 +184,7 @@
     </div>
 
     <script>
-   
+        // আপনার দেওয়া নতুন Apps Script লিংকটি এখানে বসানো হয়েছে
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzfMI_NlUh0clN_pcJm5epPUAVn6njZCKEYUT3hS9ETITKCrCGQWzlpQCcuB09HUnk/exec";
 
         let globalData = { products: [], transactions: [], incomeExpense: [] }; 
@@ -259,12 +261,6 @@
         function isToday(dateString) {
             if (!dateString) return false;
             let d = new Date(dateString);
-            
-            // ডেট ফর্মেট ঠিক করা 
-            if (isNaN(d.getTime())) {
-                const parts = String(dateString).split('/');
-                if (parts.length === 3) d = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
-            }
             if (isNaN(d.getTime())) return false;
             
             const today = new Date();
@@ -374,7 +370,7 @@
 
             const type = document.getElementById('entry-type').value;
             const amount = document.getElementById('entry-amount').value;
-            const currentDate = new Date().toLocaleString('en-US'); // লোকাল ডেট ফর্মেট
+            const currentDate = new Date().toISOString(); 
 
             let payload = {};
             
