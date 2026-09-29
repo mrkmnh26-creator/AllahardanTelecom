@@ -33,7 +33,6 @@
         @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap');
         body { font-family: 'Hind Siliguri', sans-serif; }
         
-        /* Loader Animation */
         .loader {
             border: 3px solid #f3f3f3;
             border-top: 3px solid #F26522;
@@ -70,7 +69,6 @@
     </header>
 
     <main class="max-w-7xl mx-auto p-4 md:p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-        <!-- Dashboard Cards -->
         <div class="bg-white p-5 rounded-2xl shadow-sm border-l-4 border-brandBlue flex items-center justify-between">
             <div>
                 <p class="text-sm text-gray-500">মোট প্রোডাক্ট স্টক</p>
@@ -184,11 +182,11 @@
     </div>
 
     <script>
+   
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzfMI_NlUh0clN_pcJm5epPUAVn6njZCKEYUT3hS9ETITKCrCGQWzlpQCcuB09HUnk/exec";
 
         let globalData = { products: [], transactions: [], incomeExpense: [] }; 
 
-        // Modal Functions
         function showModal() {
             const modal = document.getElementById('successModal');
             const box = document.getElementById('modalBox');
@@ -237,7 +235,7 @@
             if(document.getElementById('entry-type').value === 'Sale') {
                 const prodName = document.getElementById('entry-product').value;
                 const qty = Number(document.getElementById('entry-quantity').value) || 1;
-                const prod = globalData.products.find(p => (p["Product Name"] || p.ProductName || p["প্রোডাক্ট নাম"]) === prodName);
+                const prod = globalData.products.find(p => p.ProductName === prodName);
                 if(prod && prod.SellPrice) {
                     document.getElementById('entry-amount').value = (Number(prod.SellPrice) * qty).toFixed(0);
                 } else {
@@ -250,8 +248,8 @@
             const select = document.getElementById('entry-product');
             select.innerHTML = '<option value="">-- প্রোডাক্ট সিলেক্ট করুন --</option>';
             globalData.products.forEach(p => {
-                let pName = p["Product Name"] || p.ProductName || p["প্রোডাক্ট নাম"];
-                let stock = Number(p.Stock || p["স্টক"]) || 0;
+                let pName = p.ProductName;
+                let stock = Number(p.Stock) || 0;
                 if (pName && stock > 0) { 
                     select.innerHTML += `<option value="${pName}">${pName} (স্টক: ${stock})</option>`;
                 }
@@ -260,7 +258,15 @@
 
         function isToday(dateString) {
             if (!dateString) return false;
-            const d = new Date(dateString);
+            let d = new Date(dateString);
+            
+            // ডেট ফর্মেট ঠিক করা 
+            if (isNaN(d.getTime())) {
+                const parts = String(dateString).split('/');
+                if (parts.length === 3) d = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+            }
+            if (isNaN(d.getTime())) return false;
+            
             const today = new Date();
             return d.getDate() === today.getDate() &&
                    d.getMonth() === today.getMonth() &&
@@ -314,14 +320,14 @@
             let totalStockCount = 0;
 
             products.forEach(p => {
-                totalStockCount += Number(p.Stock || p["স্টক"] || 0);
+                totalStockCount += Number(p.Stock || 0);
                 tbody.innerHTML += `
                     <tr class="hover:bg-gray-50">
-                        <td class="p-3 font-medium text-brandBlue">${p["Product Name"] || p.ProductName || p["প্রোডাক্ট নাম"] || ''}</td>
+                        <td class="p-3 font-medium text-brandBlue">${p.ProductName || ''}</td>
                         <td class="p-3 text-gray-500">${p.Category || ''}</td>
                         <td class="p-3">৳ ${p.BuyPrice || 0}</td>
                         <td class="p-3 font-semibold text-green-600">৳ ${p.SellPrice || 0}</td>
-                        <td class="p-3"><span class="bg-blue-50 text-brandBlue px-2 py-1 rounded-md text-xs font-bold">${p.Stock || p["স্টক"] || 0} পিস</span></td>
+                        <td class="p-3"><span class="bg-blue-50 text-brandBlue px-2 py-1 rounded-md text-xs font-bold">${p.Stock || 0} পিস</span></td>
                     </tr>
                 `;
             });
@@ -335,7 +341,7 @@
             if (data.transactions) {
                 data.transactions.forEach(tx => {
                     if (tx.Type === 'Sale' && isToday(tx.Date)) {
-                        todaySalesAmount += Number(tx.TotalAmount || tx["Total Amount"] || 0);
+                        todaySalesAmount += Number(tx.TotalAmount || 0);
                     }
                 });
             }
@@ -352,7 +358,6 @@
                 });
             }
             
-            // বিক্রির টাকাও আয় হিসেবে যোগ হবে
             todayIncomeExpense += todaySalesAmount;
 
             document.getElementById('total-sales').innerText = "৳ " + todaySalesAmount.toLocaleString('en-IN');
@@ -369,7 +374,7 @@
 
             const type = document.getElementById('entry-type').value;
             const amount = document.getElementById('entry-amount').value;
-            const currentDate = new Date().toISOString();
+            const currentDate = new Date().toLocaleString('en-US'); // লোকাল ডেট ফর্মেট
 
             let payload = {};
             
@@ -396,9 +401,9 @@
                     CustomerName: "General Customer"
                 };
 
-                // Optimistic UI Update: সাথে সাথে স্টক কমানো
-                let prod = globalData.products.find(p => (p["Product Name"] || p.ProductName || p["প্রোডাক্ট নাম"]) === productName);
-                if(prod) prod.Stock = Number(prod.Stock || prod["স্টক"]) - Number(quantity);
+                // Optimistic UI Update 
+                let prod = globalData.products.find(p => p.ProductName === productName);
+                if(prod) prod.Stock = Number(prod.Stock) - Number(quantity);
                 globalData.transactions.push(payload);
 
             } else {
@@ -416,11 +421,10 @@
                     Note: "Web App Entry"
                 };
                 
-                // Optimistic UI Update: সাথে সাথে আয়-ব্যয় যোগ করা
+                // Optimistic UI Update
                 globalData.incomeExpense.push(payload);
             }
 
-            // চোখের পলকে UI আপডেট ও পপআপ
             renderTable(globalData.products);
             calculateSummary(globalData);
             populateDropdown();
@@ -431,16 +435,15 @@
             btnText.innerText = "সেভ করুন";
             submitBtn.disabled = false;
 
-            // ব্যাকগ্রাউন্ডে ডাটা সেন্ড করা (ইউজারকে অপেক্ষা করাবে না)
+            // ব্যাকগ্রাউন্ড ডাটা সেভ
             fetch(WEB_APP_URL, {
                 method: 'POST',
                 mode: 'no-cors',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             }).then(() => {
-                // ৫ সেকেন্ড পর নীরবে আসল ডাটা আবার ফেচ করবে
-                setTimeout(() => fetchData(true), 5000); 
-            }).catch(err => console.log("Background save error", err));
+                setTimeout(() => fetchData(true), 4000); 
+            }).catch(err => console.log(err));
         }
 
         // PWA Setup
@@ -460,7 +463,6 @@
             }
         });
 
-        // ইনিশিয়ালাইজেশন
         toggleInputFields();
         fetchData();
     </script>
