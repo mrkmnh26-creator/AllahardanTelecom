@@ -120,19 +120,37 @@
             <form id="entry-form" onsubmit="handleFormSubmit(event)" class="space-y-4">
                 <div>
                     <label class="block text-xs font-semibold text-gray-600 mb-1">এন্ট্রির ধরন</label>
-                    <select id="entry-type" class="w-full p-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-brandOrange outline-none">
-                        <option value="Sale">বিক্রি (Sale)</option>
-                        <option value="Income">আয় (Income)</option>
+                    <select id="entry-type" onchange="toggleInputFields()" class="w-full p-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-brandOrange outline-none">
+                        <option value="Sale">পণ্য বিক্রি (Product Sale)</option>
+                        <option value="Servicing">সার্ভিসিং আয় (Servicing)</option>
+                        <option value="Income">অন্যান্য আয় (Other Income)</option>
                         <option value="Expense">ব্যয় (Expense)</option>
                     </select>
                 </div>
-                <div>
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">বিবরণ / প্রোডাক্ট নাম</label>
-                    <input type="text" id="entry-reason" required placeholder="যেমন: নতুন ক্যাবল বিক্রি / দোকান ভাড়া" class="w-full p-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-brandOrange outline-none">
+                
+                <!-- Product Dropdown (For Sales Only) -->
+                <div id="product-select-group">
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">প্রোডাক্ট নির্বাচন করুন (স্টক থেকে)</label>
+                    <select id="entry-product" onchange="autoCalculatePrice()" class="w-full p-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-brandOrange outline-none">
+                        <option value="">লোড হচ্ছে...</option>
+                    </select>
                 </div>
+
+                <!-- Text Input (For Servicing / Others) -->
+                <div id="reason-text-group" class="hidden">
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">বিবরণ লিখুন</label>
+                    <input type="text" id="entry-reason" placeholder="যেমন: ডিসপ্লে পরিবর্তন / দোকান ভাড়া" class="w-full p-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-brandOrange outline-none">
+                </div>
+
+                <!-- Quantity (For Sales Only) -->
+                <div id="quantity-group">
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">পরিমাণ (Quantity)</label>
+                    <input type="number" id="entry-quantity" value="1" min="1" oninput="autoCalculatePrice()" class="w-full p-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-brandOrange outline-none">
+                </div>
+
                 <div>
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">টাকার পরিমাণ (৳)</label>
-                    <input type="number" id="entry-amount" required placeholder="০.০০" class="w-full p-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-brandOrange outline-none">
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">সর্বমোট টাকার পরিমাণ (৳)</label>
+                    <input type="number" id="entry-amount" required placeholder="০.০০" class="w-full p-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-brandOrange outline-none font-bold text-green-600">
                 </div>
                 <button type="submit" id="submit-btn" class="w-full bg-brandOrange text-white font-semibold py-3 rounded-xl shadow hover:bg-opacity-90 transition">
                     সেভ করুন
@@ -142,48 +160,85 @@
     </main>
 
     <script>
-        // এখানে আপনার Apps Script এর ডিপ্লয় লিংকটি ঠিক আছে কিনা দেখে নিন
+        // এখানে আপনার দেওয়া Apps Script এর ডিপ্লয় লিংকটি বসানো হয়েছে
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzfMI_NlUh0clN_pcJm5epPUAVn6njZCKEYUT3hS9ETITKCrCGQWzlpQCcuB09HUnk/exec";
 
-        // === PWA & Install Button Logic ===
+        let globalProductList = []; // ড্রপডাউনের জন্য গ্লোবাল ভেরিয়েবল 
+
+        // === UI Toggle Logic ===
+        function toggleInputFields() {
+            const type = document.getElementById('entry-type').value;
+            const prodGroup = document.getElementById('product-select-group');
+            const qtyGroup = document.getElementById('quantity-group');
+            const reasonGroup = document.getElementById('reason-text-group');
+            const amountInput = document.getElementById('entry-amount');
+
+            if (type === 'Sale') {
+                prodGroup.classList.remove('hidden');
+                qtyGroup.classList.remove('hidden');
+                reasonGroup.classList.add('hidden');
+                document.getElementById('entry-product').required = true;
+                document.getElementById('entry-reason').required = false;
+                autoCalculatePrice(); // অটো প্রাইস আপডেট
+            } else {
+                prodGroup.classList.add('hidden');
+                qtyGroup.classList.add('hidden');
+                reasonGroup.classList.remove('hidden');
+                document.getElementById('entry-product').required = false;
+                document.getElementById('entry-reason').required = true;
+                amountInput.value = ""; // অন্য ক্যাটাগরিতে টাকা ম্যানুয়ালি বসাতে হবে
+            }
+        }
+
+        // === Auto Calculate Price Logic ===
+        function autoCalculatePrice() {
+            if(document.getElementById('entry-type').value === 'Sale') {
+                const prodName = document.getElementById('entry-product').value;
+                const qty = Number(document.getElementById('entry-quantity').value) || 1;
+                const prod = globalProductList.find(p => (p["Product Name"] || p.ProductName) === prodName);
+                if(prod && prod.SellPrice) {
+                    document.getElementById('entry-amount').value = (Number(prod.SellPrice) * qty).toFixed(0);
+                } else {
+                    document.getElementById('entry-amount').value = "";
+                }
+            }
+        }
+
+        function populateDropdown() {
+            const select = document.getElementById('entry-product');
+            select.innerHTML = '<option value="">-- প্রোডাক্ট সিলেক্ট করুন --</option>';
+            globalProductList.forEach(p => {
+                let pName = p["Product Name"] || p.ProductName;
+                let stock = Number(p.Stock) || 0;
+                if (pName && stock > 0) { // শুধু স্টক থাকা প্রোডাক্ট দেখাবে
+                    select.innerHTML += `<option value="${pName}">${pName} (স্টক: ${stock})</option>`;
+                }
+            });
+        }
+
+        // === PWA Logic (Unchanged) ===
         let deferredPrompt;
         const installBtn = document.getElementById('install-btn');
-
         window.addEventListener('beforeinstallprompt', (e) => {
-            // Prevent the mini-infobar from appearing on mobile
             e.preventDefault();
-            // Stash the event so it can be triggered later.
             deferredPrompt = e;
-            // Update UI notify the user they can install the PWA
             installBtn.classList.remove('hidden');
         });
-
         installBtn.addEventListener('click', async () => {
             if (deferredPrompt) {
-                // Show the install prompt
                 deferredPrompt.prompt();
-                // Wait for the user to respond to the prompt
                 const { outcome } = await deferredPrompt.userChoice;
-                if (outcome === 'accepted') {
-                    console.log('User accepted the install prompt');
-                }
-                // We've used the prompt, and can't use it again, throw it away
                 deferredPrompt = null;
                 installBtn.classList.add('hidden');
             }
         });
-
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js').then(reg => {
-                    console.log('Service Worker Registered');
-                }).catch(err => {
-                    console.log('Service Worker Failed to Register', err);
-                });
+                navigator.serviceWorker.register('./sw.js').catch(err => console.log(err));
             });
         }
-        // === End PWA Logic ===
 
+        // === Fetch Data Logic ===
         function fetchData() {
             const statusEl = document.getElementById('live-status');
             statusEl.innerText = "লোড হচ্ছে...";
@@ -197,8 +252,11 @@
                 delete window[scriptName];
                 
                 if(result.status === "success") {
+                    globalProductList = result.products || []; // ডাটা সেভ
                     renderTable(result.products);
                     calculateSummary(result);
+                    populateDropdown(); // ড্রপডাউন লোড
+                    
                     statusEl.innerText = "Live Connected";
                     statusEl.className = "text-xs bg-green-500 text-white px-2.5 py-1 rounded-full animate-pulse";
                 } else {
@@ -268,32 +326,47 @@
             submitBtn.disabled = true;
 
             const type = document.getElementById('entry-type').value;
-            const reason = document.getElementById('entry-reason').value;
             const amount = document.getElementById('entry-amount').value;
             const currentDate = new Date().toISOString().split('T')[0];
 
             let payload = {};
-            if (type === "Income" || type === "Expense") {
-                payload = {
-                    SheetType: "IncomeExpense",
-                    ID: "IE-" + Date.now(),
-                    Date: currentDate,
-                    Category: type,
-                    Source: reason,
-                    Amount: amount,
-                    Note: "Web App Entry"
-                };
-            } else {
+            
+            if (type === "Sale") {
+                const productName = document.getElementById('entry-product').value;
+                const quantity = document.getElementById('entry-quantity').value;
+                
+                if(!productName) {
+                    alert("দয়া করে স্টক থেকে একটি প্রোডাক্ট সিলেক্ট করুন!");
+                    submitBtn.innerText = "সেভ করুন";
+                    submitBtn.disabled = false;
+                    return;
+                }
+
                 payload = {
                     SheetType: "Transactions",
                     TxID: "TX-" + Date.now(),
                     Date: currentDate,
                     Type: "Sale",
-                    ProductID: reason,
-                    Quantity: 1,
-                    UnitPrice: amount,
+                    ProductID: productName,
+                    Quantity: quantity,
+                    UnitPrice: (amount / quantity).toFixed(2),
                     TotalAmount: amount,
                     CustomerName: "General Customer"
+                };
+            } else {
+                const reasonText = document.getElementById('entry-reason').value;
+                let category = (type === "Expense") ? "Expense" : "Income";
+                // সার্ভিসিং সিলেক্ট করলে গুগল শিটে 'সার্ভিসিং: [বিবরণ]' হিসেবে সেভ হবে
+                let source = (type === "Servicing") ? `সার্ভিসিং: ${reasonText}` : reasonText;
+
+                payload = {
+                    SheetType: "IncomeExpense",
+                    ID: "IE-" + Date.now(),
+                    Date: currentDate,
+                    Category: category,
+                    Source: source,
+                    Amount: amount,
+                    Note: "Web App Entry"
                 };
             }
 
@@ -307,7 +380,8 @@
 
                 alert("সফলভাবে Google Sheet-এ সেভ হয়েছে!");
                 document.getElementById('entry-form').reset();
-                setTimeout(fetchData, 2000);
+                toggleInputFields(); // ফর্ম রিসেট করার পর ফিল্ড ঠিক করা
+                setTimeout(fetchData, 2000); // নতুন স্টক লোড করার জন্য
             } catch (error) {
                 alert("সেভ করতে সমস্যা হয়েছে।");
             } finally {
@@ -316,6 +390,8 @@
             }
         }
 
+        // শুরুতে ফর্ম ফিল্ড ও ডাটা ইনিশিয়ালাইজ করা 
+        toggleInputFields();
         fetchData();
     </script>
 </body>
